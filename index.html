@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>心智圖 → IPO 架構轉換 | 環工·植醫·養殖 教學系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .ipo-card {
+            transition: all 0.2s ease;
+        }
+        .copy-btn:active {
+            transform: scale(0.97);
+        }
+        .toast-msg {
+            animation: fadeInUp 0.25s ease forwards;
+            z-index: 9999;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .error-table td {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 10px 6px;
+            vertical-align: top;
+        }
+        .error-table th {
+            background: #f1f5f9;
+            padding: 8px 6px;
+        }
+        [contenteditable="true"]:focus {
+            outline: 2px solid #818cf8;
+            background-color: #fffbeb;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-sky-50 to-indigo-50">
+
+<div class="max-w-7xl mx-auto px-4 py-6 md:py-8">
+    <!-- 標題&amp;轉換邏輯總覽 -->
+    <div class="text-center mb-6">
+        <h1 class="text-4xl font-black bg-gradient-to-r from-indigo-700 to-emerald-600 bg-clip-text text-transparent">🧠 心智圖 → IPO 架構 自動轉換</h1>
+        <p class="text-gray-600 mt-2">把「問題、技術、情境、效益」轉為系統設計規格｜三大領域範例一鍵載入</p>
+    </div>
+
+    <!-- 轉換規則快速卡 (4 分支對應) -->
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-indigo-100 p-4 mb-6 flex flex-wrap justify-center gap-4 text-sm font-medium">
+        <div class="flex items-center gap-2"><span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full">❓ 問題定義</span> ➜ <span class="text-purple-700 font-bold">📥 INPUT</span> <span class="text-xs text-gray-500">(輸入條件/資料)</span></div>
+        <div class="flex items-center gap-2"><span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full">⚙️ 技術導入</span> ➜ <span class="text-amber-700 font-bold">⚙️ PROCESS</span> <span class="text-xs text-gray-500">(處理邏輯/演算法)</span></div>
+        <div class="flex items-center gap-2"><span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">🎯 應用情境</span> ➜ <span class="text-emerald-700 font-bold">🔄 PROCESS + 📤 OUTPUT</span></div>
+        <div class="flex items-center gap-2"><span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full">📊 效益分析</span> ➜ <span class="text-rose-700 font-bold">📊 OUTPUT</span> <span class="text-xs text-gray-500">(效益/結果)</span></div>
+    </div>
+
+    <!-- 主要雙欄區 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- 左側：心智圖輸入區 -->
+        <div class="bg-white rounded-3xl shadow-xl border border-gray-200 p-6">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2 mb-5"><i class="fas fa-project-diagram text-indigo-500"></i> 🌳 心智圖四個分支</h2>
+            <div class="space-y-5">
+                <div>
+                    <label class="flex items-center gap-2 font-semibold text-purple-700 mb-1"><i class="fas fa-question-circle text-purple-500"></i> ❓ 問題定義 <span class="text-xs text-gray-400">(系統需要解決什麼？ ➜ INPUT)</span></label>
+                    <textarea id="problem" rows="2" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-300" placeholder="範例：河川水質仰賴人工採樣，每週一次，污染通報延遲超過48小時。"></textarea>
+                </div>
+                <div>
+                    <label class="flex items-center gap-2 font-semibold text-amber-700 mb-1"><i class="fas fa-microchip text-amber-500"></i> ⚙️ 技術導入 <span class="text-xs text-gray-400">(使用什麼方法？ ➜ PROCESS)</span></label>
+                    <textarea id="tech" rows="2" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-amber-300" placeholder="範例：IoT多參數水質感測器 + LoRa傳輸 + 孤立森林異常檢測模型。"></textarea>
+                </div>
+                <div>
+                    <label class="flex items-center gap-2 font-semibold text-emerald-700 mb-1"><i class="fas fa-users text-emerald-500"></i> 🎯 應用情境 <span class="text-xs text-gray-400">(誰在何時使用？➜ 流程/P + 結果/O)</span></label>
+                    <textarea id="scenario" rows="2" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-300" placeholder="範例：環保稽查員透過手機即時查看數據，超標時系統自動發送LINE警報並標記污染熱區。"></textarea>
+                </div>
+                <div>
+                    <label class="flex items-center gap-2 font-semibold text-rose-700 mb-1"><i class="fas fa-chart-line text-rose-500"></i> 📊 效益分析 <span class="text-xs text-gray-400">(好處/量化成果 ➜ OUTPUT)</span></label>
+                    <textarea id="benefit" rows="2" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-rose-300" placeholder="範例：通報時間縮短至2分鐘內，稽查人力節省70%，年罰款降低160萬。"></textarea>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-3 mt-6">
+                <button onclick="convertToIPO()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2"><i class="fas fa-arrow-right-to-bracket"></i> 自動轉換 IPO</button>
+                <button onclick="resetAll()" class="px-5 bg-gray-200 hover:bg-gray-300 rounded-xl font-medium transition"><i class="fas fa-eraser"></i> 清空</button>
+            </div>
+            <!-- 三大領域快速範例 -->
+            <div class="mt-6 bg-gray-50 rounded-xl p-3 border border-gray-200">
+                <p class="text-sm font-semibold text-gray-700 mb-2"><i class="fas fa-database"></i> 📚 載入教學範例</p>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="loadExample('env')" class="bg-teal-100 hover:bg-teal-200 p-2 rounded-xl text-sm font-medium text-teal-800 transition"><i class="fas fa-water"></i> 環工・水質監測</button>
+                    <button onclick="loadExample('plant')" class="bg-lime-100 hover:bg-lime-200 p-2 rounded-xl text-sm font-medium text-lime-800 transition"><i class="fas fa-leaf"></i> 植醫・病蟲害診斷</button>
+                    <button onclick="loadExample('fish')" class="bg-cyan-100 hover:bg-cyan-200 p-2 rounded-xl text-sm font-medium text-cyan-800 transition"><i class="fas fa-fish"></i> 養殖・成長預測</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：IPO 可編輯結果 & 複製工具區 -->
+        <div id="resultPanel" class="bg-white rounded-3xl shadow-xl border border-gray-200 p-6 hidden lg:block">
+            <div class="space-y-5">
+                <div class="border-l-8 border-purple-500 bg-purple-50/40 rounded-2xl p-4">
+                    <h3 class="font-bold text-xl text-purple-700 flex items-center gap-2"><i class="fas fa-inbox"></i> 📥 INPUT（輸入條件）</h3>
+                    <div id="inputResult" contenteditable="true" class="mt-2 bg-white p-3 rounded-xl border border-purple-200 min-h-[110px] whitespace-pre-wrap text-gray-700 focus:bg-amber-50"></div>
+                    <p class="text-xs text-gray-400 mt-1">✏️ 可直接編輯調整，符合你的系統設計</p>
+                </div>
+                <div class="border-l-8 border-amber-500 bg-amber-50/40 rounded-2xl p-4">
+                    <h3 class="font-bold text-xl text-amber-700 flex items-center gap-2"><i class="fas fa-gears"></i> ⚙️ PROCESS（處理邏輯）</h3>
+                    <div id="processResult" contenteditable="true" class="mt-2 bg-white p-3 rounded-xl border border-amber-200 min-h-[130px] whitespace-pre-wrap text-gray-700"></div>
+                    <p class="text-xs text-gray-400 mt-1">✏️ 包含技術步驟 + 情境操作流程</p>
+                </div>
+                <div class="border-l-8 border-rose-500 bg-rose-50/40 rounded-2xl p-4">
+                    <h3 class="font-bold text-xl text-rose-700 flex items-center gap-2"><i class="fas fa-chart-simple"></i> 📊 OUTPUT（輸出效益）</h3>
+                    <div id="outputResult" contenteditable="true" class="mt-2 bg-white p-3 rounded-xl border border-rose-200 min-h-[110px] whitespace-pre-wrap text-gray-700"></div>
+                    <p class="text-xs text-gray-400 mt-1">✏️ 量化效益 / 警報 / 報表</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-3 mt-6">
+                <button id="copyContentBtn" class="copy-btn flex-1 bg-gray-800 hover:bg-gray-900 text-white py-2.5 rounded-xl font-medium shadow flex items-center justify-center gap-2"><i class="fas fa-copy"></i> 複製 IPO 內容</button>
+                <button id="copyTableBtn" class="copy-btn flex-1 bg-emerald-700 hover:bg-emerald-800 text-white py-2.5 rounded-xl font-medium shadow flex items-center justify-center gap-2"><i class="fas fa-table"></i> 複製 IPO 架構表</button>
+                <button id="copyAiPromptBtn" class="copy-btn flex-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2"><i class="fas fa-robot"></i> 複製 AI 提示詞</button>
+            </div>
+            <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-yellow-800">
+                <i class="fas fa-chalkboard-user"></i> <strong>教師提示</strong>：應用情境會自動拆分為「操作流程(PROCESS)」與「使用者獲得結果(OUTPUT)」。可手動編輯右側區塊，再複製表格或AI對話。
+            </div>
+        </div>
+    </div>
+
+    <!-- 手機版動態區 (僅小螢幕出現) -->
+    <div id="mobileResultWrapper" class="mt-8 lg:hidden"></div>
+
+    <!-- 常見錯誤 vs 修正對照表 (環工/植醫/養殖) 根據講義整合 -->
+    <div class="mt-12 bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+        <div class="bg-gradient-to-r from-amber-50 to-orange-50 px-6 py-4 border-b border-amber-200">
+            <h3 class="font-bold text-lg flex items-center gap-2 text-amber-800"><i class="fas fa-triangle-exclamation"></i> 三大常見錯誤 × 領域修正範例 (Step-by-Step)</h3>
+            <p class="text-sm text-gray-600">避免「直接複製原文」「情境誤放」「區塊空白」，參考環工/植醫/養殖正確轉換寫法</p>
+        </div>
+        <div class="overflow-x-auto p-4">
+            <table class="error-table w-full text-sm border-collapse">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="text-left">❌ 常見錯誤</th>
+                        <th class="text-left">🌊 環工修正範例</th>
+                        <th class="text-left">🌱 植醫修正範例</th>
+                        <th class="text-left">🐟 養殖修正範例</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="font-medium">✗ 直接複製心智圖原文<br><span class="text-gray-400 text-xs">(太模糊、缺少具體參數)</span></td>
+                        <td>「水質惡化」<span class="text-red-500">→</span> <span class="bg-teal-50 px-1">「pH超過9.5且持續30分鐘」</span></td>
+                        <td>「病蟲害難辨識」<span class="text-red-500">→</span> <span class="bg-lime-50 px-1">「CNN Top-1 辨識準確率需達91% + 病徵比對」</span></td>
+                        <td>「魚會死亡」<span class="text-red-500">→</span> <span class="bg-cyan-50 px-1">「溶氧DO &lt; 3.0 mg/L 持續10分鐘」</span></td>
+                    </tr>
+                    <tr>
+                        <td class="font-medium">✗ 應用情境全放OUTPUT<br><span class="text-gray-400 text-xs">(操作流程 / 結果混淆)</span></td>
+                        <td>情境中的「稽查人員確認污染點」<span class="text-red-500">→</span> <span class="bg-teal-50">PROCESS：推播條件判斷＋定位標記</span>；<span class="bg-teal-50">OUTPUT：污染報告與位置地圖</span></td>
+                        <td>「農民遠端複核」<span class="text-red-500">→</span> <span class="bg-lime-50">PROCESS：低置信度轉人工複核流程</span>；<span class="bg-lime-50">OUTPUT：待確認案件列表</span></td>
+                        <td>「業者接收推播 & 啟動增氧機」<span class="text-red-500">→</span><span class="bg-cyan-50"> PROCESS：自動控制指令執行</span>；<span class="bg-cyan-50">OUTPUT：警報紀錄＋設備狀態回報</span></td>
+                    </tr>
+                    <tr>
+                        <td class="font-medium">✗ 某區塊空白不補<br><span class="text-gray-400 text-xs">(IPO缺漏)</span></td>
+                        <td>遺漏OUTPUT <span class="text-red-500">→</span> 補「自動PDF報表 + 即時儀表板」</td>
+                        <td>遺漏INPUT <span class="text-red-500">→</span> 補「氣象資料 + 農民GPS位置」</td>
+                        <td>遺漏PROCESS <span class="text-red-500">→</span> 補「LSTM溶氧預測模型 + 風險分級邏輯 」</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="bg-gray-50 px-5 py-2 text-xs text-gray-500 border-t">💡 轉換心法：具體化數據、情境拆解P/O、補齊缺失區塊，系統設計更扎實。</div>
+    </div>
+
+    <div class="text-center text-gray-400 text-xs mt-8 border-t pt-5">
+        <i class="fas fa-arrows-spin"></i> 自動轉換引擎：問題定義➜INPUT | 技術導入➜PROCESS | 效益分析➜OUTPUT | 應用情境同時強化PROCESS與OUTPUT
+    </div>
+</div>
+
+<script>
+    // -------------- 輔助函式：切分要點（按句號/分號/換行） -------------
+    function splitToItems(raw) {
+        if (!raw || raw.trim() === "") return [];
+        let processed = raw.replace(/[。；]/g, (m) => m === '。' ? '.\n' : ';\n');
+        let parts = processed.split(/[.;\n]+/);
+        let res = [];
+        for (let p of parts) {
+            let trimmed = p.trim();
+            if (trimmed.length > 0) res.push(trimmed);
+        }
+        if (res.length === 0 && raw.trim().length > 0) res = [raw.trim()];
+        return res;
+    }
+
+    // 陣列轉 bullet 格式
+    function formatBullet(items) {
+        if (!items || items.length === 0) return "（請填寫相關內容）";
+        return items.map(it => `• ${it}`).join("\n");
+    }
+
+    // 核心轉換: 產生 inputItems, processItems, outputItems
+    function generateIPO(problem, tech, scenario, benefit) {
+        // INPUT: 問題定義為主, 情境中若有「輸入/偵測/拍照/記錄」等可補充
+        let inputItems = splitToItems(problem);
+        let scenarioItems = splitToItems(scenario);
+        let extraInput = scenarioItems.filter(s => 
+            s.includes("輸入") || s.includes("偵測") || s.includes("感測") || s.includes("拍照") ||
+            s.includes("使用者提供") || s.includes("需求") || s.includes("記錄") || s.includes("取得")
+        );
+        if (extraInput.length > 0) inputItems.push(...extraInput.slice(0, 2));
+        inputItems = [...new Map(inputItems.map(i => [i.trim(), i])).values()];
+        if (inputItems.length === 0) inputItems = ["請於問題定義描述系統需要接收的資料（感測器數值/使用者輸入）"];
+
+        // PROCESS: 技術導入 + 應用情境中的操作流程 (加上標記)
+        let processItems = splitToItems(tech);
+        if (scenario && scenario.trim() !== "") {
+            let scenarioProc = splitToItems(scenario);
+            for (let step of scenarioProc) {
+                if (step.trim().length > 0) processItems.push(`🎯 [操作流程] ${step}`);
+            }
+        }
+        processItems = [...new Map(processItems.map(i => [i.trim(), i])).values()];
+        if (processItems.length === 0) processItems = ["請在技術導入說明演算法/設備/分析步驟"];
+
+        // OUTPUT: 效益分析 + 應用情境中的結果導向（使用者獲得）
+        let outputItems = splitToItems(benefit);
+        if (scenario && scenario.trim() !== "") {
+            let scenarioOut = splitToItems(scenario);
+            for (let res of scenarioOut) {
+                if (res.trim().length > 0) outputItems.push(`📢 [情境結果] ${res}`);
+            }
+        }
+        outputItems = [...new Map(outputItems.map(i => [i.trim(), i])).values()];
+        if (outputItems.length === 0) outputItems = ["請填寫效益分析（量化數值或決策報表）"];
+        return { inputItems, processItems, outputItems };
+    }
+
+    // 更新UI (桌面版contenteditable)
+    function updateUI(inputItems, processItems, outputItems) {
+        const inputDiv = document.getElementById('inputResult');
+        const procDiv = document.getElementById('processResult');
+        const outDiv = document.getElementById('outputResult');
+        if (inputDiv) inputDiv.innerText = formatBullet(inputItems);
+        if (procDiv) procDiv.innerText = formatBullet(processItems);
+        if (outDiv) outDiv.innerText = formatBullet(outputItems);
+    }
+
+    // 手機版渲染（動態）
+    function renderMobile(inputItems, processItems, outputItems) {
+        const wrapper = document.getElementById('mobileResultWrapper');
+        if (!wrapper) return;
+        const isMobile = window.innerWidth < 1024;
+        if (!isMobile) {
+            wrapper.innerHTML = '';
+            return;
+        }
+        const inputBullet = formatBullet(inputItems);
+        const procBullet = formatBullet(processItems);
+        const outBullet = formatBullet(outputItems);
+        wrapper.innerHTML = `
+            <div class="bg-white rounded-3xl shadow-xl p-5 border border-gray-200">
+                <h3 class="text-xl font-bold mb-3 flex items-center gap-2"><i class="fas fa-microchip text-indigo-500"></i> IPO 轉換結果 (可編輯)</h3>
+                <div class="space-y-4">
+                    <div class="border-l-4 border-purple-500 pl-3">
+                        <div class="font-bold text-purple-700">📥 INPUT (輸入條件)</div>
+                        <div id="mobileInput" contenteditable="true" class="bg-white p-2 rounded-lg border border-purple-200 min-h-[100px] whitespace-pre-wrap text-sm">${inputBullet}</div>
+                    </div>
+                    <div class="border-l-4 border-amber-500 pl-3">
+                        <div class="font-bold text-amber-700">⚙️ PROCESS (處理邏輯)</div>
+                        <div id="mobileProcess" contenteditable="true" class="bg-white p-2 rounded-lg border border-amber-200 min-h-[120px] whitespace-pre-wrap text-sm">${procBullet}</div>
+                    </div>
+                    <div class="border-l-4 border-rose-500 pl-3">
+                        <div class="font-bold text-rose-700">📊 OUTPUT (輸出效益)</div>
+                        <div id="mobileOutput" contenteditable="true" class="bg-white p-2 rounded-lg border border-rose-200 min-h-[100px] whitespace-pre-wrap text-sm">${outBullet}</div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    <button id="mobileCopyContent" class="flex-1 bg-gray-700 text-white py-2 rounded-xl text-sm"><i class="fas fa-copy"></i> 複製內容</button>
+                    <button id="mobileCopyTable" class="flex-1 bg-emerald-600 text-white py-2 rounded-xl text-sm"><i class="fas fa-table"></i> 複製架構表</button>
+                    <button id="mobileCopyAi" class="flex-1 bg-indigo-100 text-indigo-800 py-2 rounded-xl text-sm"><i class="fas fa-robot"></i> AI提示詞</button>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">✏️ 點擊文字可直接編輯，再按複製按鈕</p>
+            </div>
+        `;
+        // 綁定手機版按鈕: 從可編輯區取值
+        const getMobileValues = () => {
+            const inputVal = document.getElementById('mobileInput')?.innerText || "";
+            const procVal = document.getElementById('mobileProcess')?.innerText || "";
+            const outVal = document.getElementById('mobileOutput')?.innerText || "";
+            return { inputVal, procVal, outVal };
+        };
+        document.getElementById('mobileCopyContent')?.addEventListener('click', () => {
+            const { inputVal, procVal, outVal } = getMobileValues();
+            const plain = `【📥 INPUT】\n${inputVal}\n\n【⚙️ PROCESS】\n${procVal}\n\n【📊 OUTPUT】\n${outVal}`;
+            copyToClipboard(plain, "✅ 手機版IPO內容已複製!");
+        });
+        document.getElementById('mobileCopyTable')?.addEventListener('click', () => {
+            const { inputVal, procVal, outVal } = getMobileValues();
+            copyFormattedTable(inputVal, procVal, outVal);
+        });
+        document.getElementById('mobileCopyAi')?.addEventListener('click', () => {
+            const { inputVal, procVal, outVal } = getMobileValues();
+            copyAiPromptFromValues(inputVal, procVal, outVal);
+        });
+    }
+
+    // 複製主要轉換事件
+    function convertToIPO() {
+        const problem = document.getElementById('problem').value;
+        const tech = document.getElementById('tech').value;
+        const scenario = document.getElementById('scenario').value;
+        const benefit = document.getElementById('benefit').value;
+        if (!problem.trim() && !tech.trim() && !scenario.trim() && !benefit.trim()) {
+            alert("請至少輸入一個分支內容，才能產生 IPO 轉換");
+            return;
+        }
+        const { inputItems, processItems, outputItems } = generateIPO(problem, tech, scenario, benefit);
+        updateUI(inputItems, processItems, outputItems);
+        // 顯示右側面板 (若隱藏)
+        const panel = document.getElementById('resultPanel');
+        if (panel && panel.classList.contains('hidden')) panel.classList.remove('hidden');
+        // 手機版渲染
+        renderMobile(inputItems, processItems, outputItems);
+        // 滾動到結果區
+        const target = document.getElementById('resultPanel') || document.getElementById('mobileResultWrapper');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // 從桌面版可編輯區取得即時文字 (使用者編輯後)
+    function getCurrentIPOStrings() {
+        const inputVal = document.getElementById('inputResult')?.innerText || "";
+        const processVal = document.getElementById('processResult')?.innerText || "";
+        const outputVal = document.getElementById('outputResult')?.innerText || "";
+        return { inputVal, processVal, outputVal };
+    }
+
+    // 複製純文字 IPO
+    function copyIpoPlain() {
+        const { inputVal, processVal, outputVal } = getCurrentIPOStrings();
+        const plain = `【📥 INPUT 輸入條件】\n${inputVal || "(未填寫)"}\n\n【⚙️ PROCESS 處理邏輯】\n${processVal || "(未填寫)"}\n\n【📊 OUTPUT 輸出效益】\n${outputVal || "(未填寫)"}`;
+        copyToClipboard(plain, "✅ IPO 內容已複製！");
+    }
+
+    // 複製表格格式 (美觀框線表)
+    function copyFormattedTable(inputVal, processVal, outputVal) {
+        const cleanIn = inputVal.trim() || "(請填寫輸入條件)";
+        const cleanProc = processVal.trim() || "(請填寫處理邏輯)";
+        const cleanOut = outputVal.trim() || "(請填寫輸出效益)";
+        const line = "║" + "─".repeat(84) + "║";
+        const formatCell = (text) => {
+            return text.split('\n').map(l => {
+                let short = l.length > 84 ? l.slice(0, 81) + "..." : l;
+                return `║ ${short.padEnd(84)}║`;
+            }).join('\n');
+        };
+        const table = `
+╔══════════════════════════════════════════════════════════════════╗
+║                           📊 IPO 架構表                          ║
+╠══════════════════════════════════════════════════════════════════╣
+║ 📥 INPUT (輸入條件)                                              ║
+╠──────────────────────────────────────────────────────────────────╣
+${formatCell(cleanIn)}
+╠══════════════════════════════════════════════════════════════════╣
+║ ⚙️ PROCESS (處理邏輯)                                            ║
+╠──────────────────────────────────────────────────────────────────╣
+${formatCell(cleanProc)}
+╠══════════════════════════════════════════════════════════════════╣
+║ 📊 OUTPUT (輸出效益)                                             ║
+╠──────────────────────────────────────────────────────────────────╣
+${formatCell(cleanOut)}
+╚══════════════════════════════════════════════════════════════════╝
+        `.trim();
+        copyToClipboard(table, "📋 IPO 架構表已複製 (邊框格式)！");
+    }
+    function copyIpoTable() {
+        const { inputVal, processVal, outputVal } = getCurrentIPOStrings();
+        copyFormattedTable(inputVal, processVal, outputVal);
+    }
+
+    function copyAiPromptFromValues(inputVal, processVal, outputVal) {
+        const prompt = `你是一位智慧系統架構師與教育科技專家。請根據以下由心智圖轉換而成的 IPO 架構，幫我完成詳細的系統設計文件、技術選擇建議或實作範例。
+
+任務目標：基於 INPUT、PROCESS、OUTPUT 三個面向，完善此 AIoT/資訊系統的設計，提出可能的資料流、演算法、使用者體驗關鍵點與風險。
+
+📥 INPUT（輸入條件／資料來源）：
+${inputVal || "未提供"}
+
+⚙️ PROCESS（核心處理與推論邏輯）：
+${processVal || "未提供"}
+
+📊 OUTPUT（預期產出與量化效益）：
+${outputVal || "未提供"}
+
+請用條列式或段落呈現，並補充技術可行性、邊界條件。`;
+        copyToClipboard(prompt, "🤖 AI 提示詞已複製！貼到 ChatGPT/Claude 進行進階設計");
+    }
+    function copyAiPrompt() {
+        const { inputVal, processVal, outputVal } = getCurrentIPOStrings();
+        copyAiPromptFromValues(inputVal, processVal, outputVal);
+    }
+
+    // 通用複製 (支援降級)
+    async function copyToClipboard(text, successMsg) {
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast(successMsg);
+                return;
+            } catch(e) { console.warn(e); }
+        }
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.top = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch(e) { }
+        document.body.removeChild(textarea);
+        if (ok) showToast(successMsg);
+        else alert("請手動複製：\n" + text.slice(0, 500));
+    }
+
+    function showToast(msg) {
+        let toast = document.createElement('div');
+        toast.className = "fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-5 py-2 rounded-full shadow-lg z-50 text-sm toast-msg";
+        toast.innerText = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2500);
+    }
+
+    function resetAll() {
+        document.getElementById('problem').value = '';
+        document.getElementById('tech').value = '';
+        document.getElementById('scenario').value = '';
+        document.getElementById('benefit').value = '';
+        if (document.getElementById('inputResult')) document.getElementById('inputResult').innerText = '';
+        if (document.getElementById('processResult')) document.getElementById('processResult').innerText = '';
+        if (document.getElementById('outputResult')) document.getElementById('outputResult').innerText = '';
+        const wrapper = document.getElementById('mobileResultWrapper');
+        if (wrapper) wrapper.innerHTML = '';
+        const panel = document.getElementById('resultPanel');
+        if (panel) panel.classList.add('hidden');
+        showToast("已重置所有欄位");
+    }
+
+    // 範例資料庫 (對應環工/植醫/養殖)
+    const examples = {
+        env: { problem: "河川水質仰賴人工採樣，7天才監測一次，污染事件通報嚴重延遲超過48小時。\n24小時連續監測需求與即時告警。", tech: "多參數水質感測器(溶氧/pH/導電度/氨氮)、LoRa無線傳輸、邊緣運算異常偵測(孤立森林模型)、雲端儀表板。", scenario: "環保稽查員透過手機APP或電腦儀表板即時查看各測站水質趨勢；當任一參數超過法規預警值，系統自動以LINE/簡訊通知，並標記可疑污染熱區。", benefit: "異常通報時間從數小時縮短至2分鐘內；節省70%稽查人力；年度罰款降低160萬元；自動生成稽查報表與歷史趨勢分析。" },
+        plant: { problem: "水稻稻熱病與胡麻葉枯病初期病斑極相似，農民誤判率高；傳統送驗需3-5天延誤防治時機。", tech: "手機拍攝葉片影像＋EfficientNet輕量化CNN模型，病蟲害特徵資料庫1.8萬筆；離線推論與即時比對。", scenario: "農民於田間發現異常斑點時，以手機APP拍攝病斑位置，系統5秒內輸出病害名稱、置信度、建議用藥及施藥安全期。", benefit: "田間診斷準確率92.5%；農藥使用量減少38%；每公頃節省藥劑與人力成本約2200元。" },
+        fish: { problem: "室內養殖池水質變化劇烈，溶氧驟降易導致大規模死亡；傳統人工巡檢每4小時一次，反應不及。", tech: "溶氧、pH、氨氮感測器 (每10秒採集) + 邊緣AI預警模型(LSTM預測溶氧趨勢) + 自動增氧機控制模組。", scenario: "養殖戶手機收到溶氧下降預警，系統自動啟動備用增氧機，並透過LINE推送建議調整投餵量。匯整日報表，養殖戶可遠端監控。", benefit: "魚蝦存活率提升28%，意外死亡事件減少65%；節省電費約18%；飼料轉化率提高20%。" }
+    };
+    function loadExample(type) {
+        const ex = examples[type];
+        if (!ex) return;
+        document.getElementById('problem').value = ex.problem;
+        document.getElementById('tech').value = ex.tech;
+        document.getElementById('scenario').value = ex.scenario;
+        document.getElementById('benefit').value = ex.benefit;
+        convertToIPO();
+    }
+
+    // 綁定桌面按鈕
+    document.getElementById('copyContentBtn')?.addEventListener('click', copyIpoPlain);
+    document.getElementById('copyTableBtn')?.addEventListener('click', copyIpoTable);
+    document.getElementById('copyAiPromptBtn')?.addEventListener('click', copyAiPrompt);
+    // 調整響應式，監聽resize重新渲染
+    window.addEventListener('resize', () => {
+        if (document.getElementById('inputResult')?.innerText) {
+            const inputText = document.getElementById('inputResult')?.innerText || '';
+            const procText = document.getElementById('processResult')?.innerText || '';
+            const outText = document.getElementById('outputResult')?.innerText || '';
+            const parseBulletToArr = (txt) => txt.split('\n').filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, ''));
+            const inputArr = parseBulletToArr(inputText).length ? parseBulletToArr(inputText) : ["請輸入問題定義"];
+            const procArr = parseBulletToArr(procText).length ? parseBulletToArr(procText) : ["請輸入技術導入"];
+            const outArr = parseBulletToArr(outText).length ? parseBulletToArr(outText) : ["請輸入效益分析"];
+            renderMobile(inputArr, procArr, outArr);
+        } else {
+            const wrapper = document.getElementById('mobileResultWrapper');
+            if (wrapper && window.innerWidth >= 1024) wrapper.innerHTML = '';
+        }
+    });
+    // 加載預設植醫案例作為入門
+    window.addEventListener('DOMContentLoaded', () => {
+        loadExample('plant');
+    });
+</script>
+</body>
+</html>
